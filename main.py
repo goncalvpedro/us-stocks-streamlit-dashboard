@@ -22,9 +22,8 @@ def load_data(ticker):
 # Main Title
 st.title("📊 Dividend & Portfolio Dashboard")
 
-# Dropdown list at top
+# Dropdown at the top
 selected_ticker = st.selectbox("Choose an asset", tickers)
-
 
 # Portfolio return
 st.subheader("💼 1-Year Portfolio Performance")
@@ -44,16 +43,19 @@ col1.metric(label="Initial Investment", value=f"${total_investment}")
 col2.metric(label="Portfolio Value (Now)", value=f"${portfolio_value:.2f}")
 col3.metric(label="Portfolio Return (1 Year)", value=f"{portfolio_return:.2f}%")
 
-# Dividend Yield for all tickers
-st.subheader("📈 Dividend Yield (Trailing 12 Months)")
+# Dividend Yield Table (above chart)
+st.subheader("📈 Dividend Yield (Trailing 12 Months) + Last Dividend Info")
 dividend_yield_data = []
 for ticker in tickers:
     divs, price = load_data(ticker)
     cutoff_date = pd.Timestamp.today() - pd.DateOffset(years=1)
-    divs.index = divs.index.tz_localize(None)  # <-- Same fix here
+    divs.index = divs.index.tz_localize(None)
     divs = divs[divs.index >= cutoff_date]
 
     total_div = divs.sum()
+    last_div = divs[-1] if not divs.empty else 0
+    last_date = divs.index[-1].strftime('%m/%d/%Y') if not divs.empty else "—"
+
     try:
         current_price = price['Close'][-1]
         div_yield = total_div / current_price
@@ -61,24 +63,25 @@ for ticker in tickers:
         div_yield = 0
     dividend_yield_data.append({
         "Ticker": ticker,
-        "Dividend Yield (%)": round(div_yield * 100, 2)
+        "Dividend Yield (%)": round(div_yield * 100, 2),
+        "Last Dividend Paid ($)": round(last_div, 4),
+        "Last Payment Date": last_date
     })
 
-    
+df_yield = pd.DataFrame(dividend_yield_data)
+st.dataframe(df_yield.set_index("Ticker"), use_container_width=True)
+
 # Dividend bar chart (last 12 months)
+st.subheader(f"📅 Monthly Dividends for {selected_ticker}")
 divs, _ = load_data(selected_ticker)
 cutoff_date = pd.Timestamp.today() - pd.DateOffset(years=1)
-divs.index = divs.index.tz_localize(None)  # <-- Proper fix here
+divs.index = divs.index.tz_localize(None)
 divs = divs[divs.index >= cutoff_date]
 monthly_divs = divs.resample('M').sum()
 
-st.subheader(f"📅 Monthly Dividends for {selected_ticker}")
-fig, ax = plt.subplots(figsize=(12, 5))
+fig, ax = plt.subplots(figsize=(6, 3))  # Smaller figure
 monthly_divs.plot(kind='bar', ax=ax)
 ax.set_ylabel("Dividend per Share ($)")
 ax.set_xlabel("Month")
 ax.set_xticklabels([x.strftime("%m/%Y") for x in monthly_divs.index], rotation=45)
 st.pyplot(fig)
-
-df_yield = pd.DataFrame(dividend_yield_data)
-st.dataframe(df_yield.set_index("Ticker"), use_container_width=True)
