@@ -1,5 +1,5 @@
 from sqlalchemy import Table, Column, Integer, String, TIMESTAMP, Numeric, MetaData
-from database.connection import engine  # ⬅️ FIXED: Direct import from connection
+from database.connection import engine
 import pandas as pd
 
 metadata = MetaData()

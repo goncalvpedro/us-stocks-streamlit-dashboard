@@ -2,20 +2,24 @@ from sqlalchemy import Column, Integer, String, Numeric, Date, TIMESTAMP, func
 from sqlalchemy.exc import SQLAlchemyError
 from database.connection import Base, engine, SessionLocal
 
+
 class Portfolio(Base):
     __tablename__ = 'portfolio'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     symbol = Column(String(10), nullable=False)
     shares = Column(Numeric(10, 3), nullable=False)
-    price = Column(Numeric(10,2), nullable=False)
+    price = Column(Numeric(10, 2), nullable=False)
     first_acquisition = Column(Date, nullable=False)
     created_at = Column(TIMESTAMP, server_default=func.now())
-    updated_at = Column(TIMESTAMP, server_default=func.now(), onupdate=func.now())
+    updated_at = Column(
+        TIMESTAMP, server_default=func.now(), onupdate=func.now())
 
     def __repr__(self):
         return f"<Portfolio(symbol='{self.symbol}', shares={self.shares})>"
-
+    @classmethod
+    def to_dict(cls):
+        return
 
     @classmethod
     def create_table(cls):
@@ -30,7 +34,8 @@ class Portfolio(Base):
         cls.create_table()
         session = SessionLocal()
         try:
-            item = cls(symbol=symbol, shares=shares, price=price, first_acquisition=first_acquisition)
+            item = cls(symbol=symbol, shares=shares, price=price,
+                       first_acquisition=first_acquisition)
             session.add(item)
             session.commit()
             print(f"Item created successfully.")
