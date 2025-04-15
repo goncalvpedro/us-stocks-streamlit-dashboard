@@ -27,7 +27,7 @@ today = dt.today().strftime('%Y-%m-%d')
 
 def get_historical_data(ticker, start_date, end_date=today):
     if not isinstance(ticker, str):
-        return print(f'Attribute must be a list. Type received was {type(ticker)}')
+        return print(f'Attribute must be a str. Type received was {type(ticker)}')
 
     try:
 

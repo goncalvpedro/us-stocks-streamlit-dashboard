@@ -1,12 +1,11 @@
 from sqlalchemy import Table, Column, Integer, String, TIMESTAMP, Numeric, MetaData
-from database import engine
+from database.connection import engine  # ⬅️ FIXED: Direct import from connection
 import pandas as pd
 
 metadata = MetaData()
 
 def create_historic_table(symbol: str):
     table_name = f"{symbol.lower()}_historic_data"
-
     historic_table = Table(
         table_name,
         metadata,
@@ -16,17 +15,14 @@ def create_historic_table(symbol: str):
         Column("volume", Integer),
         extend_existing=True
     )
-
     try:
         metadata.create_all(engine, tables=[historic_table])
         print(f"Table {table_name} created or already exists.")
     except Exception as e:
         print(f"Failed to create {table_name} due to: {e}")
 
-
 def create_dividend_table(symbol: str):
     table_name = f"{symbol.lower()}_dividends"
-
     dividend_table = Table(
         table_name,
         metadata,
@@ -35,7 +31,6 @@ def create_dividend_table(symbol: str):
         Column("dividend", Numeric(10, 2)),
         extend_existing=True
     )
-
     try:
         metadata.create_all(engine, tables=[dividend_table])
         print(f"Table {table_name} created or already exists.")
@@ -44,7 +39,11 @@ def create_dividend_table(symbol: str):
 
 
 def load_historical_data(symbol: str, df: pd.DataFrame):
+
+    create_historic_table(symbol)
+
     table_name = f"{symbol.lower()}_historic_data"
+
     try:
         df.to_sql(
             name=table_name,
@@ -54,12 +53,14 @@ def load_historical_data(symbol: str, df: pd.DataFrame):
             method='multi',
             chunksize=10000
         )
-        print(f"Data for {symbol} inserted successfully.")
+        print(f"Historical data for {symbol} inserted successfully.")
     except Exception as e:
-        print(f"Error inserting data for {symbol}: {e}")
+        print(f"Error inserting historical data for {symbol}: {e}")
 
 def load_dividend_data(symbol: str, df: pd.DataFrame):
-    table_name = f"{symbol.lower()}_dividend"
+    create_dividend_table(symbol)
+
+    table_name = f"{symbol.lower()}_dividends"
     try:
         df.to_sql(
             name=table_name,
@@ -69,6 +70,7 @@ def load_dividend_data(symbol: str, df: pd.DataFrame):
             method='multi',
             chunksize=10000
         )
-        print(f"DDividend for {symbol} inserted successfully.")
+        print(f"Dividend data for {symbol} inserted successfully.")
     except Exception as e:
         print(f"Error inserting dividends for {symbol}: {e}")
+
